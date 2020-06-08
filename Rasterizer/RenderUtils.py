@@ -46,3 +46,16 @@ view_mat = np.array([[1.0, 0.0,  0.0,  0.0],
                    [0.0, 0.0,  1.0, -3.0],
                    [0.0, 0.0,  0.0,  1.0]], np.float)
 
+def task_def(x, coord_a, coord_b, coord_c, area, y):
+  w0 = EdgeFunction(coord_a[0], coord_b[0], [x, y])
+  w1 = EdgeFunction(coord_c[0], coord_a[0], [x, y])
+  w2 = EdgeFunction(coord_b[0], coord_c[0], [x, y])
+  if (w0 >= 0 and w1 >= 0 and w2 >= 0):
+    w0 /= area
+    w1 /= area
+    w2 /= area
+    color = w0 * coord_a[1] * 255 + w1 * coord_b[1] * 255 + w2 * coord_c[1] * 255
+    color = (int(color[0][0]), int(color[0][1]), int(color[0][2]))
+    return color
+  return (0, 0, 0)
+
