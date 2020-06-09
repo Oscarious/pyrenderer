@@ -43,9 +43,9 @@ class MyRenderer:
       triangle_indices = self.indices[j]
       assert(len(triangle_indices) == 3)
       projected_vertices = view_mat.dot(self.vertices.T).T
-      projected_vertices = self.perspective_matrix.dot(projected_vertices.T).T
       for i in range(len(triangle_indices)):
-        coords_z.append(self.vertices[triangle_indices[i]][2])
+        coords_z.append(projected_vertices[triangle_indices[i]][2])
+      projected_vertices = self.perspective_matrix.dot(projected_vertices.T).T
       attr_vertices = []
       for i in range(len(triangle_indices)):
         x1, y1 = self.MapCoords(projected_vertices[triangle_indices[i]][0] / projected_vertices[triangle_indices[i]][3], projected_vertices[triangle_indices[i]][1] / projected_vertices[triangle_indices[i]][3])
@@ -53,7 +53,7 @@ class MyRenderer:
         #triangle_vertices.extend(projected_vertices[triangle_indices[i]])
         cv2.line(self.canvas, (int(x1), int(y1)), (int(x2), int(y2)), (255, 255, 255), 1)
         attr_vertices.extend((x1, y1))
-        offset = i + j*len(self.indices)
+        offset = i + j*len(triangle_indices)
         if (len(self.colors) > offset):
           attr_vertices.extend(self.colors[offset])
         else:
@@ -84,19 +84,18 @@ class MyRenderer:
         w0 = EdgeFunction(coord_a, coord_b, [x, y])
         w1 = EdgeFunction(coord_c, coord_a, [x, y])
         w2 = EdgeFunction(coord_b, coord_c, [x, y])
-        coord_z = 1 / (w0 / coords_z[0] + w1 / coords_z[1] + w2 / coords_z[2])
-        if (coord_z > self.zbuffer[x][y]):
-        # if (True):
-          self.zbuffer[x][y] = coord_z
-          if (w0 >= 0 and w1 >= 0 and w2 >= 0):
+        if (w0 >= 0 and w1 >= 0 and w2 >= 0):
+          coord_z = 1 / (w0 / coords_z[0] + w1 / coords_z[1] + w2 / coords_z[2])
+          if (coord_z > self.zbuffer[x][y]):
+            self.zbuffer[x][y] = coord_z
             w0 /= area
             w1 /= area
             w2 /= area
             color = w0 * color_a * 255 + w1 * color_b * 255 + w2 * color_c * 255
             color = [int(color[0][0]), int(color[0][1]), int(color[0][2])]
-            self.colorbuffer[x][y] = color
-        cv2.circle(self.canvas, (x, y), 1, self.colorbuffer[x][y].tolist(), 0)
-        # (self.colorbuffer[x][y][0], self.colorbuffer[x][y][1], self.colorbuffer[x][y][2])
+            self.colorbuffer[y][x] = color
+        # cv2.circle(self.canvas, (x, y), 1, self.colorbuffer[x][y].tolist(), 0)
+        # print(x, y, self.colorbuffer[x][y].tolist())
       # for i in range(len(ys)):
       #   cv2.circle(self.canvas, (x, ys[i]), 1, colors[i], 0)
   def Draw(self):
@@ -104,7 +103,8 @@ class MyRenderer:
     while(True):
       self.Transform(RotateMatrix(math.radians(2), NormolizeVector([0, 1, 0])))
       self.VertexDraw()
-      cv2.imshow('render: ', self.canvas)
+      # self.canvas = self.colorbuffer.copy()
+      cv2.imshow('render: ', self.colorbuffer)
       key = cv2.waitKey(20)
       if (key == ord('q')):
         print('exit')
