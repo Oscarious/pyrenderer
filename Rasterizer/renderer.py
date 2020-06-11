@@ -6,6 +6,7 @@ from multiprocessing.dummy import Pool
 from functools import partial
 from ControlUtils import *
 import os
+from data import Light
 
 class MyRenderer:
   def __init__(self, width=800, height=600):
@@ -18,6 +19,8 @@ class MyRenderer:
     self.rotate = False
     self.zbuffer = np.full((self.height, self.width), -9999.9, dtype=np.float)
     self.colorbuffer = np.zeros((self.height, self.width, 3), np.uint8)
+  def SetLight(self, light):
+    self.light = light
   def SetVertices(self, vertices):
     self.vertices = vertices
   def SetIndices(self, indices):
@@ -28,6 +31,8 @@ class MyRenderer:
     self.canvas = np.zeros((self.height, self.width, 3), np.uint8)
     self.colorbuffer = np.zeros((self.height, self.width, 3), np.uint8)
     self.zbuffer = np.full((self.height, self.width), -9999)
+  def SetNormals(self, normals):
+    self.normals = normals
   def MapCoords(self, x, y):
     maped_x = self.width / 2 * x + self.width / 2
     maped_y = -self.height / 2 * y + self.height / 2
@@ -39,11 +44,14 @@ class MyRenderer:
     coords_z = [] 
     view_vertices = view_mat.dot(self.vertices[:,0:4].T).T
     projected_vertices = self.perspective_matrix.dot(view_vertices.T).T
+    triangle_count = 0
     for triangle_indices in self.indices:
       assert(len(triangle_indices) == 3)
       for i in range(len(triangle_indices)):
         coords_z.append(projected_vertices[triangle_indices[i]][2])
       attr_vertices = []
+      normals = []
+      orig_vertices = []
       for i in range(len(triangle_indices)):
         x1, y1 = self.MapCoords(projected_vertices[triangle_indices[i]][0] / projected_vertices[triangle_indices[i]][3], projected_vertices[triangle_indices[i]][1] / projected_vertices[triangle_indices[i]][3])
         x2, y2 = self.MapCoords(projected_vertices[triangle_indices[(i+4)%3]][0] / projected_vertices[triangle_indices[(i+4)%3]][3], projected_vertices[triangle_indices[(i+4)%3]][1] / projected_vertices[triangle_indices[(i+4)%3]][3])
@@ -53,8 +61,12 @@ class MyRenderer:
         # attr_vertex.extend((x1, y1))
         # attr_vertices.extend(self.vertices[triangle_indices[i]][4:7])
         attr_vertices.append(attr_vertex)
-      self.FragmentDraw(attr_vertices, coords_z)  
-  def FragmentDraw(self, vertices, coords_z):
+        index = i+triangle_count*len(triangle_indices)
+        normals.append(self.normals[index])
+        orig_vertices.append(self.vertices[index])
+      triangle_count+=1
+      self.FragmentDraw(attr_vertices, coords_z, orig_vertices, normals)  
+  def FragmentDraw(self, vertices, coords_z, orig_vertices, normals):
     coord_a = vertices[0][0]
     color_a = vertices[0][1]
     coord_b = vertices[1][0]
@@ -70,13 +82,17 @@ class MyRenderer:
         w1 = EdgeFunction(coord_c, coord_a, [x, y])
         w2 = EdgeFunction(coord_b, coord_c, [x, y])
         if (w0 >= 0 and w1 >= 0 and w2 >= 0):
-          coord_z = 1 / (w0 / coords_z[0] + w1 / coords_z[1] + w2 / coords_z[2])
-          if (coord_z > self.zbuffer[x][y]):
-            self.zbuffer[x][y] = coord_z
+          inter_coord_z = 1 / (w0 / coords_z[0] + w1 / coords_z[1] + w2 / coords_z[2])
+          inter_coord_x = w0 * orig_vertices[0][0] + w1 * orig_vertices[1][0] + w2 * orig_vertices[2][0]
+          inter_coord_y = w0 * orig_vertices[0][1] + w1 * orig_vertices[1][1] + w2 * orig_vertices[2][1] 
+          inter_normal = w0 * normals[0] + w1 * normals[1] + w2 * normals[2]
+          diffuse = self.light.DiffuseFactor(inter_normal, np.array([inter_coord_x, inter_coord_y, inter_coord_z]))
+          if (inter_coord_z > self.zbuffer[x][y]):
+            self.zbuffer[x][y] = inter_coord_z
             w0 /= area
             w1 /= area
             w2 /= area
-            color = w0 * color_a * 255 + w1 * color_b * 255 + w2 * color_c * 255
+            color = (w0 * color_a * 255 + w1 * color_b * 255 + w2 * color_c * 255) * diffuse
             color = color.astype(np.uint)
             self.colorbuffer[y][x] = color
   def Draw(self):
@@ -104,6 +120,5 @@ class MyRenderer:
         view_mat += far_shift_mat
       elif (key == ord(' ')):
         self.rotate = not self.rotate
-      self.canvas = np.zeros((self.height, self.width, 3), np.uint8)
       self.zbuffer = np.full((self.height, self.width), -9999.9, dtype=np.float)
       self.colorbuffer = np.zeros((self.height, self.width, 3), np.uint8)

@@ -13,5 +13,7 @@ if __name__ == '__main__':
   renderer.SetVertices(pyramid_vertices)
   renderer.SetIndices(pyramid_indices)
   renderer.SetCanvasSize(256, 256)
+  renderer.SetLight(Light())
+  renderer.SetNormals(pyramid_normals)
   renderer.Draw()
     
