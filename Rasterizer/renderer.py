@@ -20,8 +20,6 @@ class MyRenderer:
     self.colorbuffer = np.zeros((self.height, self.width, 3), np.uint8)
   def SetVertices(self, vertices):
     self.vertices = vertices
-  def SetColors(self, colors):
-    self.colors = colors
   def SetIndices(self, indices):
     self.indices = indices
   def SetCanvasSize(self, width, height):
@@ -36,50 +34,37 @@ class MyRenderer:
     return maped_x, maped_y
   def Transform(self, trans_mat=np.identity(4)):
     if (self.rotate):
-      self.vertices = trans_mat.dot(self.vertices.T).T
+      self.vertices[:,0:4] = trans_mat.dot(self.vertices[:,0:4].T).T
   def VertexDraw(self):
     coords_z = [] 
-    for j in range(len(self.indices)):
-      triangle_indices = self.indices[j]
+    view_vertices = view_mat.dot(self.vertices[:,0:4].T).T
+    projected_vertices = self.perspective_matrix.dot(view_vertices.T).T
+    for triangle_indices in self.indices:
       assert(len(triangle_indices) == 3)
-      projected_vertices = view_mat.dot(self.vertices.T).T
       for i in range(len(triangle_indices)):
         coords_z.append(projected_vertices[triangle_indices[i]][2])
-      projected_vertices = self.perspective_matrix.dot(projected_vertices.T).T
       attr_vertices = []
       for i in range(len(triangle_indices)):
         x1, y1 = self.MapCoords(projected_vertices[triangle_indices[i]][0] / projected_vertices[triangle_indices[i]][3], projected_vertices[triangle_indices[i]][1] / projected_vertices[triangle_indices[i]][3])
         x2, y2 = self.MapCoords(projected_vertices[triangle_indices[(i+4)%3]][0] / projected_vertices[triangle_indices[(i+4)%3]][3], projected_vertices[triangle_indices[(i+4)%3]][1] / projected_vertices[triangle_indices[(i+4)%3]][3])
         #triangle_vertices.extend(projected_vertices[triangle_indices[i]])
         cv2.line(self.canvas, (int(x1), int(y1)), (int(x2), int(y2)), (255, 255, 255), 1)
-        attr_vertices.extend((x1, y1))
-        offset = i + j*len(triangle_indices)
-        if (len(self.colors) > offset):
-          attr_vertices.extend(self.colors[offset])
-        else:
-          attr_vertices.extend([0, 0, 0])
+        attr_vertex = [(x1, y1), self.vertices[triangle_indices[i]][4:7]]
+        # attr_vertex.extend((x1, y1))
+        # attr_vertices.extend(self.vertices[triangle_indices[i]][4:7])
+        attr_vertices.append(attr_vertex)
       self.FragmentDraw(attr_vertices, coords_z)  
   def FragmentDraw(self, vertices, coords_z):
-    coord_a = [vertices[0], vertices[1]]
-    color_a = np.array([
-      [vertices[2], vertices[3], vertices[4]]
-    ])
-    coord_b = [vertices[5], vertices[6]]
-    color_b = np.array([
-      [vertices[7], vertices[8], vertices[9]]
-    ])
-    coord_c = [vertices[10], vertices[11]]
-    color_c = np.array([
-      [vertices[12], vertices[13], vertices[14]]
-    ])
+    coord_a = vertices[0][0]
+    color_a = vertices[0][1]
+    coord_b = vertices[1][0]
+    color_b = vertices[1][1]
+    coord_c = vertices[2][0]
+    color_c = vertices[2][1]
     area = EdgeFunction(coord_a, coord_b, coord_c)
-    minX, minY, maxX, maxY = GetTriangleBorder(vertices, 5)
-    
-    # pool = Pool(os.cpu_count())
-    ys = [y for y in range(int(minY), int(maxY))]
+    coords_2d = [vertices[0][0], vertices[1][0], vertices[2][0]]
+    minX, minY, maxX, maxY = GetTriangleBorder(coords_2d)
     for x in range(int(minX), int(maxX)):
-      #task = partial(task_def, x, (coord_a, color_a), (coord_b, color_b), (coord_c, color_c), area)
-      #colors = pool.map(task, ys)
       for y in range(int(minY), int(maxY)):
         w0 = EdgeFunction(coord_a, coord_b, [x, y])
         w1 = EdgeFunction(coord_c, coord_a, [x, y])
@@ -92,12 +77,8 @@ class MyRenderer:
             w1 /= area
             w2 /= area
             color = w0 * color_a * 255 + w1 * color_b * 255 + w2 * color_c * 255
-            color = [int(color[0][0]), int(color[0][1]), int(color[0][2])]
+            color = color.astype(np.uint)
             self.colorbuffer[y][x] = color
-        # cv2.circle(self.canvas, (x, y), 1, self.colorbuffer[x][y].tolist(), 0)
-        # print(x, y, self.colorbuffer[x][y].tolist())
-      # for i in range(len(ys)):
-      #   cv2.circle(self.canvas, (x, ys[i]), 1, colors[i], 0)
   def Draw(self):
     global view_mat
     while(True):

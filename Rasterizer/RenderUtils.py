@@ -26,16 +26,16 @@ def PerspectiveMatrix(FOV, aspect, zNear, zFar):
                    [0.0, 0.0, (zNear + zFar) / (zNear - zFar), -1.0],
                    [0.0, 0.0, 2.0 * zFar * zNear / (zNear - zFar), 0.0]], np.float).T#why transpose projection matrix?
 
-def GetTriangleBorder(vertices, step=2):
+def GetTriangleBorder(vertices):
   minX = 99999
   maxX = -minX
   minY = 99999
   maxY = -minY
-  for i in range(0, len(vertices), step):
-      minX = min(minX, vertices[i])
-      maxX = max(maxX, vertices[i])
-      minY = min(minY, vertices[i+1])
-      maxY = max(maxY, vertices[i+1])
+  for i in range(0, len(vertices)):
+      minX = min(minX, vertices[i][0])
+      maxX = max(maxX, vertices[i][0])
+      minY = min(minY, vertices[i][1])
+      maxY = max(maxY, vertices[i][1])
   return minX, minY, maxX, maxY
 
 def EdgeFunction(veca, vecb, vecc):
