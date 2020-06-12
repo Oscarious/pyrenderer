@@ -19,6 +19,11 @@ class MyRenderer:
     self.rotate = False
     self.zbuffer = np.full((self.height, self.width), -9999.9, dtype=np.float)
     self.colorbuffer = np.zeros((self.height, self.width, 3), np.uint8)
+    self.texture = None
+  def SetTextureCoord(self, texture_coord):
+    self.texture_coord = texture_coord
+  def SetTexture(self, texture):
+    self.texture = texture
   def SetLight(self, light):
     self.light = light
   def SetVertices(self, vertices):
@@ -76,6 +81,10 @@ class MyRenderer:
     area = EdgeFunction(coord_a, coord_b, coord_c)
     coords_2d = [vertices[0][0], vertices[1][0], vertices[2][0]]
     minX, minY, maxX, maxY = GetTriangleBorder(coords_2d)
+    max_x = -999
+    max_y = -999
+    min_x = 999
+    min_y = 999
     for x in range(int(minX), int(maxX)):
       for y in range(int(minY), int(maxY)):
         w0 = EdgeFunction(coord_a, coord_b, [x, y])
@@ -88,10 +97,24 @@ class MyRenderer:
           inter_normal = (w0 * normals[0] + w1 * normals[1] + w2 * normals[2]) / area
           diffuse = self.light.DiffuseFactor(inter_normal, np.array([inter_coord_x, inter_coord_y, inter_coord_z]))
           if (inter_coord_z > self.zbuffer[x][y]):
-            self.zbuffer[x][y] = inter_coord_z
-            color = (w0 * color_a * 255 + w1 * color_b * 255 + w2 * color_c * 255) * diffuse / area
-            color = color.astype(np.uint)
-            self.colorbuffer[y][x] = color
+            if (self.texture is None):
+              self.zbuffer[x][y] = inter_coord_z
+              color = (w0 * color_a * 255 + w1 * color_b * 255 + w2 * color_c * 255) * diffuse / area
+              color = color.astype(np.uint)
+              self.colorbuffer[y][x] = color
+            else:
+              texture_coord_x = (w0*self.texture_coord[0][0] + w1*self.texture_coord[1][0] + w2*self.texture_coord[2][0]) / area
+              texture_coord_y = (w0*self.texture_coord[0][1] + w1*self.texture_coord[1][1] + w2*self.texture_coord[2][1]) / area
+              texture_coord_x = texture_coord_x * self.texture.shape[0]
+              texture_coord_y = texture_coord_y * self.texture.shape[1]
+              max_x = max(max_x, texture_coord_x)
+              max_y = max(max_y, texture_coord_y)
+              min_x = min(min_x, texture_coord_x)
+              min_y = min(min_y, texture_coord_y)
+              color = self.texture[int(texture_coord_x)][int(texture_coord_y)]
+              self.colorbuffer[y][x] = color
+
+
   def Draw(self):
     global view_mat
     while(True):

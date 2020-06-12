@@ -281,6 +281,11 @@ triangle_normals = np.array([
   [ 0,  1, 1]
 ])
 
+triangle_texture_coord = np.array([
+  [0.0, 0],
+  [1.0, 0],
+  [0.0, 1]
+])
 
 class Light:
   def __init__(self):
