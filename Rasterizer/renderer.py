@@ -83,16 +83,13 @@ class MyRenderer:
         w2 = EdgeFunction(coord_b, coord_c, [x, y])
         if (w0 >= 0 and w1 >= 0 and w2 >= 0):
           inter_coord_z = 1 / (w0 / coords_z[0] + w1 / coords_z[1] + w2 / coords_z[2])
-          inter_coord_x = w0 * orig_vertices[0][0] + w1 * orig_vertices[1][0] + w2 * orig_vertices[2][0]
-          inter_coord_y = w0 * orig_vertices[0][1] + w1 * orig_vertices[1][1] + w2 * orig_vertices[2][1] 
-          inter_normal = w0 * normals[0] + w1 * normals[1] + w2 * normals[2]
+          inter_coord_x = (w0 * orig_vertices[0][0] + w1 * orig_vertices[1][0] + w2 * orig_vertices[2][0]) / area
+          inter_coord_y = (w0 * orig_vertices[0][1] + w1 * orig_vertices[1][1] + w2 * orig_vertices[2][1]) / area
+          inter_normal = (w0 * normals[0] + w1 * normals[1] + w2 * normals[2]) / area
           diffuse = self.light.DiffuseFactor(inter_normal, np.array([inter_coord_x, inter_coord_y, inter_coord_z]))
           if (inter_coord_z > self.zbuffer[x][y]):
             self.zbuffer[x][y] = inter_coord_z
-            w0 /= area
-            w1 /= area
-            w2 /= area
-            color = (w0 * color_a * 255 + w1 * color_b * 255 + w2 * color_c * 255) * diffuse
+            color = (w0 * color_a * 255 + w1 * color_b * 255 + w2 * color_c * 255) * diffuse / area
             color = color.astype(np.uint)
             self.colorbuffer[y][x] = color
   def Draw(self):
