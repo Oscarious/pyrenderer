@@ -13,7 +13,7 @@ if __name__ == '__main__':
   #pyramid_vertices = np.c_[pyramid_vertices, pyramid_colors]
   print(os.getcwd())
   os.chdir('Rasterizer/res')
-  texture = cv2.imread('wall.jpg')
+  texture = cv2.imread('file.png')
   triangle_vertices = np.c_[triangle_vertices, triangle_colors]
   renderer.SetTextureCoord(triangle_texture_coord)
   renderer.SetTexture(texture)
@@ -23,4 +23,3 @@ if __name__ == '__main__':
   renderer.SetLight(Light())
   renderer.SetNormals(triangle_normals)
   renderer.Draw()
-    

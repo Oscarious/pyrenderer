@@ -103,10 +103,12 @@ class MyRenderer:
               color = color.astype(np.uint)
               self.colorbuffer[y][x] = color
             else:
+              # print(self.texture_coord)
               texture_coord_x = (w0*self.texture_coord[0][0] + w1*self.texture_coord[1][0] + w2*self.texture_coord[2][0]) / area
               texture_coord_y = (w0*self.texture_coord[0][1] + w1*self.texture_coord[1][1] + w2*self.texture_coord[2][1]) / area
-              texture_coord_x = texture_coord_x * self.texture.shape[0]
-              texture_coord_y = texture_coord_y * self.texture.shape[1]
+              assert(texture_coord_y < 1)
+              texture_coord_x = texture_coord_x * self.texture.shape[1]
+              texture_coord_y = texture_coord_y * self.texture.shape[0]
               max_x = max(max_x, texture_coord_x)
               max_y = max(max_y, texture_coord_y)
               min_x = min(min_x, texture_coord_x)
