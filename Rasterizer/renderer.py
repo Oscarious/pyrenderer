@@ -20,6 +20,7 @@ class MyRenderer:
     self.zbuffer = np.full((self.height, self.width), -9999.9, dtype=np.float)
     self.colorbuffer = np.zeros((self.height, self.width, 3), np.uint8)
     self.texture = None
+    print(self.perspective_matrix)
   def SetTextureCoord(self, texture_coord):
     self.texture_coord = texture_coord
   def SetTexture(self, texture):
@@ -48,7 +49,8 @@ class MyRenderer:
   def VertexDraw(self):
     coords_z = [] 
     view_vertices = view_mat.dot(self.vertices[:,0:4].T).T
-    projected_vertices = self.perspective_matrix.dot(view_vertices.T).T
+    # projected_vertices = self.perspective_matrix.dot(view_vertices.T).T
+    projected_vertices = view_vertices.dot(self.perspective_matrix)
     triangle_count = 0
     for triangle_indices in self.indices:
       assert(len(triangle_indices) == 3)
