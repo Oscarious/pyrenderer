@@ -7,4 +7,6 @@ if __name__ == '__main__':
   renderer = PyRenderer()
   camera = Camera()
   prim.LoadModel('sora/cube.json')
+  prim.LoadTexture('sora/cube.png')
+  # renderer.Resize(64, 64, camera)
   renderer.Render(prim, camera)

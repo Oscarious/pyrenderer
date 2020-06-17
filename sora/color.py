@@ -15,6 +15,8 @@ class Color:
   def GetVector3(self):
     return np.array([self.r, self.g, self.b])
   
+  def GetVector3i(self):
+    return np.array([self.r * 255, self.g * 255, self.b * 255], np.uint) 
   def GetVector4(self):
     return np.array([self.r, self.g, self.b, self.a])
   

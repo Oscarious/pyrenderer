@@ -21,10 +21,10 @@ def NormolizeVector(vec):
   return np.array([[vec[0]/de, vec[1]/de, vec[2]/de]]).T
 
 def PerspectiveMatrix(FOV, aspect, zNear, zFar):
-  return np.array([[1.0 / (math.tan(FOV/2) * aspect), 0.0, 0.0, 0.0],
-                   [0.0, 1.0 / math.tan(FOV/2), 0.0, 0.0],
+  return np.array([[1.0 / (math.tan(math.radians(FOV/2)) / aspect), 0.0, 0.0, 0.0],
+                   [0.0, 1.0 / math.tan(math.radians(FOV/2)), 0.0, 0.0],
                    [0.0, 0.0, (zNear + zFar) / (zNear - zFar), -1.0],
-                   [0.0, 0.0, 2.0 * zFar * zNear / (zNear - zFar), 0.0]], np.float).T#why transpose projection matrix?
+                   [0.0, 0.0, 2.0 * zFar * zNear / (zNear - zFar), 0.0]], np.float)#why transpose projection matrix?
 
 def GetTriangleBorder(vertices):
   minX = 99999

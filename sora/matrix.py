@@ -1,4 +1,4 @@
-from math import cos, sin, tan, pi
+from math import cos, sin, tan, pi, radians
 import numpy as np
 
 
@@ -38,8 +38,8 @@ def create_translation_matrix(tx, ty, tz):
 
 
 def create_projection_matrix(vertical_fov, aspect_ratio, near_z, far_z):
-    f = 1.0 / (tan((vertical_fov / 2.0) * (pi / 180.0)))
+    f = 1.0 / (tan(radians(vertical_fov / 2.0)))
     return np.array([[f / aspect_ratio, 0.0, 0.0, 0.0],
                      [0.0, f, 0.0, 0.0],
                      [0.0, 0.0, (near_z + far_z) / (near_z - far_z), (2.0 * near_z * far_z) / (near_z - far_z)],
-                     [0.0, 0.0, -1.0, 0.0]])
+                     [0.0, 0.0, -1.0, 0.0]], np.float)
