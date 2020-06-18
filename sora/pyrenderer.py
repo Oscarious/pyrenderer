@@ -42,7 +42,7 @@ class PyRenderer:
       # if (key == ord('1')):
       scene.primitive.RotateY(-5)
       # elif (key == ord('2')):
-      scene.primitive.RotateX(-1)
+      scene.primitive.RotateX(-3)
       camera.update(key)
       self.framebuffer.Clear()
 

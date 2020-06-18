@@ -4,6 +4,17 @@ from color import Color
 
 COUNTER_CLOCKWISE = 1
 CLOCKWISE = -1
+
+
+def BackFaceCulling(v0, v1, v2):
+  e1 = v2 - v1
+  e2 = v0 - v1
+  e = np.cross(e1, e2)
+  if (e[2] < 0): #front face
+    return False 
+  else:
+    return True
+
 class Rasterizer:
   def __init__(self):
     self.winding = COUNTER_CLOCKWISE 
@@ -63,7 +74,8 @@ class Rasterizer:
     cv2.line(framebuffer.pixel_data, (int(x0), int(y0)), (int(x2), int(y2)), color.GetVector3i().tolist(), 1)
     cv2.line(framebuffer.pixel_data, (int(x1), int(y1)), (int(x2), int(y2)), color.GetVector3i().tolist(), 1)
     # cv2.circle(framebuffer.pixel_data, (int(x0), int(y0)), 30, ())
-  
+
+
   def Draw(self, framebuffer, scene, camera):
     width = framebuffer.width
     height= framebuffer.height
@@ -87,6 +99,9 @@ class Rasterizer:
       v0 = v0.dot(camera.view_matrix.T)
       v1 = v1.dot(camera.view_matrix.T)
       v2 = v2.dot(camera.view_matrix.T)
+
+      if (not BackFaceCulling(v0[:3], v1[:3], v2[:3])):
+        continue
 
       #clip space
       v0Clip = v0.dot(camera.projection_matrix.T)
