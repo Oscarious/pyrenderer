@@ -1,12 +1,18 @@
 from pyrenderer import PyRenderer
 from primitive import Primitive
 from camera import Camera
+from scene import Scene
+from tinyloader import TinyLoader
 
 if __name__ == '__main__':
-  prim = Primitive()
   renderer = PyRenderer()
   camera = Camera()
-  prim.LoadModel('sora/cube.json')
+  scene = Scene()
+  loader = TinyLoader()
+  model_data = loader.load('sora/cube.json')
+  prim = Primitive(model_data)
   prim.LoadTexture('sora/cube.png')
-  # renderer.Resize(64, 64, camera)
-  renderer.Render(prim, camera)
+  scene.AddPrimitive(prim)
+  scene.AddAmbientLights(loader.ambient_lights)
+  scene.AddDirectionalLights(loader.directional_lights)
+  renderer.Render(scene, camera)

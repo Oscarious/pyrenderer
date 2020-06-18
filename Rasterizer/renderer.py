@@ -20,7 +20,6 @@ class MyRenderer:
     self.zbuffer = np.full((self.height, self.width), -9999.9, dtype=np.float)
     self.colorbuffer = np.zeros((self.height, self.width, 3), np.uint8)
     self.texture = None
-    print(self.perspective_matrix)
   def SetTextureCoord(self, texture_coord):
     self.texture_coord = texture_coord
   def SetTexture(self, texture):

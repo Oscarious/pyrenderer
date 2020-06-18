@@ -3,7 +3,7 @@ import matrix
 import euler_angle
 class Camera:
   def __init__(self):
-    self.position = np.array([0.0, 0.0,  10.0])
+    self.position = np.array([0.0, 0.0,  15.0])
     self.up_vector = np.array([0.0, 1.0, 0.0])
     self.view_matrix = np.identity(4)
     self.projection_matrix = np.identity(4)
@@ -25,7 +25,6 @@ class Camera:
     """
     self.aspect_ratio = aspect_ratio
     self.projection_matrix = matrix.create_projection_matrix(self.vertical_fov, self.aspect_ratio, self.near_z, self.far_z)
-    print(self.projection_matrix)
 
   def update(self, key_pressed=None):
     if (key_pressed == ord('w')):
