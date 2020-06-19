@@ -1,13 +1,12 @@
 from math import *
 from plane import Plane
 
-
 TOP = 0
-FRONT = 1
-BOTTOM = 2
-BACK = 3
-LEFT = 4
-RIGHT = 5
+BOTTOM = 1
+LEFT = 2
+RIGHT = 3
+NEAR = 4
+FAR = 5
 
 class Frustum:
   def __init__(self):
@@ -22,39 +21,54 @@ class Frustum:
     far_half_widht = far_half_height * camera.aspect_ratio
 
     origin = camera.position
-    near_forward = camera.forward * near_distance
-    near_right = camera.right * near_half_width
-    near_up = camera.up * near_half_height
-    far_forward = camera.farward * far_distance
-    far_right = camera.right * far_half_widht
-    far_up = camera.up * far_half_height
+    near_forward = camera.forward_vector * near_distance
+    near_right = camera.right_vector * near_half_width
+    near_up = camera.up_vector * near_half_height
+    far_forward = camera.forward_vector * far_distance
+    far_right = camera.right_vector * far_half_widht
+    far_up = camera.up_vector * far_half_height
 
-    ntl = near_forward - near_right + near_up
-    ntr = near_forward + near_right + near_up
-    nbl = near_forward - near_right - near_up
-    nbr = near_forward + near_right - near_up
+    ntl = origin + near_forward - near_right + near_up
+    ntr = origin + near_forward + near_right + near_up
+    nbl = origin + near_forward - near_right - near_up
+    nbr = origin + near_forward + near_right - near_up
+    
+    ftl = origin + far_forward - far_right + far_up
+    ftr = origin + far_forward + far_right + far_up
+    fbl = origin + far_forward - far_right - far_up
+    fbr = origin + far_forward + far_right - far_up
 
-    ftl = far_forward - far_right + far_up
-    ftr = far_forward + far_right + far_up
-    fbl = far_forward - far_right - far_up
-    fbr = far_forward + far_right - far_up
+    # self.planes[TOP].SetupFromPoints(ntl, ftr, ftl)
+    # self.planes[FRONT].SetupFromPoints(ntl, ntr, nbl)
+    # self.planes[BOTTOM].SetupFromPoints(nbl, nbr, fbl)
+    # self.planes[BACK].SetupFromPoints(ftl, fbl, ftr)
+    # self.planes[LEFT].SetupFromPoints(nbl, fbl, ntl)
+    # self.planes[RIGHT].SetupFromPoints(nbr, ntr, fbl)
 
-    self.planes[TOP] = plane.SetupFromPoints(ntl, ftr, ftl)
-    self.planes[FRONT] = plane.SetupFromPoints(ntl, ntr, nbl)
-    self.planes[BOTTOM] = plane.SetupFromPoints(nbl, nbr, fbl)
-    self.planes[BACK] = plane.SetupFromPoints(ftl, fbl, ftr)
-    self.planes[LEFT] = plane.SetupFromPoints(nbl, fbl, ntl)
-    self.planes[RIGHT] = plane.SetupFromPoints(nbr, ntr, fbl)
-
-  def IsPointInside(self, p):
+    self.planes[TOP].SetupFromPoints(ntl, ftl, ftr)
+    self.planes[BOTTOM].SetupFromPoints(nbl, fbr, fbl)
+    self.planes[LEFT].SetupFromPoints(ntl, fbl, ftl)
+    self.planes[RIGHT].SetupFromPoints(ntr, ftr, fbr)
+    self.planes[NEAR].SetupFromPoints(ntl, ntr, nbr)
+    self.planes[FAR].SetupFromPoints(ftr, ftl, fbl)
+    return self
+  def IsPointInside(self, p, planes):
     """
     Test if point is inside the frustum
     """
-    for plane in self.planes:
-      if (plane.PointDistance(p) < 0.0001):
+    # v = p[:3].copy()
+    # v /= p[2]
+    # v[2] = p[3]
+    for plane in planes:
+      if (plane.PointDistance(p[:3]) < 0.0001):
         return False
     return True
   
+  def IsPointInsideZ(self, point):
+    return self.IsPointInside(point, [self.planes[NEAR], self.planes[FAR]])
+  
+  def IsPointInsideXY(self, point):
+    return self.IsPointInside(point, [self.planes[LEFT], self.planes[RIGHT], self.planes[BOTTOM], self.planes[TOP]])
 
     
     

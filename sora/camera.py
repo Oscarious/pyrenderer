@@ -1,9 +1,10 @@
 import numpy as np
 import matrix
 import euler_angle
+from frustum import Frustum
 class Camera:
   def __init__(self):
-    self.position = np.array([0.0, 0.0,  15.0])
+    self.position = np.array([0.0, 0.0,  8.0])
     self.up_vector = np.array([0.0, 1.0, 0.0])
     self.view_matrix = np.identity(4)
     self.projection_matrix = np.identity(4)
@@ -16,7 +17,7 @@ class Camera:
     self.right_vector = np.array([1.0, 0.0, 0.0])
     self.up_vector = np.array([0.0, 1.0, 0.0])
     self.move_speed = 0.2
-
+    self.frustum = Frustum().SetupFromCamera(self)
   def update_projection_matrix(self, aspect_ratio):
     """
     Update the internal projection matrix.

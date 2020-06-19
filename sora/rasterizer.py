@@ -9,11 +9,23 @@ CLOCKWISE = -1
 def BackFaceCulling(v0, v1, v2):
   e1 = v2 - v1
   e2 = v0 - v1
-  e = np.cross(e1, e2)
-  if (e[2] < 0): #front face
-    return False 
-  else:
+  normal = np.cross(e1[:3], e2[:3])
+  front_view = np.array([0, 0, 1])
+  return np.dot(normal, front_view) > 0
+
+def ClipSpaceCulling(v0, v1, v2, camera):
+  if (v0[3] < camera.near_z and v1[3] < camera.near_z and v2[3] < camera.near_z):
+    return False
+  elif (v0[3] > camera.far_z and v1[3] > camera.far_z and v2[3] > camera.far_z):
+    return False
+  elif (abs(v0[0]) <= abs(v0[3]) or abs(v0[1]) <= abs(v0[3]) or abs(v0[2]) <= abs(v0[3])):
     return True
+  elif (abs(v1[0]) <= abs(v0[3]) or abs(v1[1]) <= abs(v1[3]) or abs(v1[2]) <= abs(v1[3])):
+    return True
+  elif (abs(v2[0]) <= abs(v2[3]) or abs(v2[1]) <= abs(v2[3]) or abs(v2[2]) <= abs(v2[3])):
+    return True
+  else:
+    return False
 
 class Rasterizer:
   def __init__(self):
@@ -100,13 +112,18 @@ class Rasterizer:
       v1 = v1.dot(camera.view_matrix.T)
       v2 = v2.dot(camera.view_matrix.T)
 
-      if (not BackFaceCulling(v0[:3], v1[:3], v2[:3])):
-        continue
-
       #clip space
       v0Clip = v0.dot(camera.projection_matrix.T)
       v1Clip = v1.dot(camera.projection_matrix.T)
       v2Clip = v2.dot(camera.projection_matrix.T)
+
+      # view frustum cull 
+      if (not camera.frustum.IsPointInsideZ(v0) or not camera.frustum.IsPointInsideZ(v1) \
+         or not camera.frustum.IsPointInsideZ(v2)):
+         continue
+      elif (not camera.frustum.IsPointInsideXY(v0) and not camera.frustum.IsPointInsideXY(v1) \
+         and not camera.frustum.IsPointInsideXY(v2)):
+         continue
 
       #one_over_w = 1 / z 
       one_over_w0 = 1.0 / v0Clip[3]
@@ -117,21 +134,28 @@ class Rasterizer:
       v0NDC = v0Clip * one_over_w0
       v1NDC = v1Clip * one_over_w1
       v2NDC = v2Clip * one_over_w2
+
+      if (not BackFaceCulling(v0NDC, v1NDC, v2NDC)):
+        continue
       
+
       #frame space linear interpolate
       v0Raster = ((v0NDC[0] + 1) * width / 2, (1 - v0NDC[1]) * height / 2)
       v1Raster = ((v1NDC[0] + 1) * width / 2, (1 - v1NDC[1]) * height / 2)
       v2Raster = ((v2NDC[0] + 1) * width / 2, (1 - v2NDC[1]) * height / 2)
-      
+
+
       minx = int(min(min(v0Raster[0], v1Raster[0]), v2Raster[0]))
       miny = int(min(min(v0Raster[1], v1Raster[1]), v2Raster[1]))
       maxx = int(max(max(v0Raster[0], v1Raster[0]), v2Raster[0]))
       maxy = int(max(max(v0Raster[1], v1Raster[1]), v2Raster[1]))
-      
+
       triangle_coverage = self.EdgeFunction(v0Raster, v1Raster, v2Raster)
       
       for y in range(miny, maxy+1):
         for x in range(minx, maxx+1):
+          if (x > width or x < 0 or y > height or y < 0):
+            continue
           sample = (x, y)
           e0 = self.EdgeFunction(v1Raster, v2Raster, sample)
           e1 = self.EdgeFunction(v2Raster, v0Raster, sample)
